@@ -1,4 +1,4 @@
-# 🛡️ AHAVA-GUARD: Windows Security Auditor
+# 🛡️ AHAVAH-GUARD: Windows Security Auditor
 
 > **Auditoria de Segurança Reversa e Hardening para Windows**
 
@@ -36,7 +36,7 @@ O script executa automaticamente 4 módulos de verificação:
 
 ## 📦 Instalação das Bibliotecas
 
-Uma das principais vantagens do **AHAVA-GUARD** é que ele não possui dependências externas. **Você NÃO precisa usar o `pip install`.**
+Uma das principais vantagens do **AHAVAH-GUARD** é que ele não possui dependências externas. **Você NÃO precisa usar o `pip install`.**
 
 O script utiliza apenas a **Biblioteca Padrão (Standard Library)** que já vem instalada junto com o Python:
 
@@ -86,6 +86,6 @@ Não utilize este código para auditar redes ou computadores de terceiros sem au
 ---
 
 <div align="center">
-    <p><b>Desenvolvido por ahavadev</b></p>
+    <p><b>Desenvolvido por ahavahdev</b></p>
     <p>🔒 Secure your world.</p>
 </div>
