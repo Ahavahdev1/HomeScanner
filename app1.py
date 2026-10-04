@@ -6,7 +6,7 @@ import sys
 import winreg
 
 def ativar_ansi_windows():
-    """Habilita suporte a cores ANSI no console nativo do Windows."""
+    """Habilita suporte nativo a cores ANSI no console do Windows."""
     if os.name == 'nt':
         kernel32 = ctypes.windll.kernel32
         h_stdout = kernel32.GetStdHandle(-11)
@@ -50,6 +50,20 @@ def obter_ip_local() -> str:
         return '127.0.0.1'
     finally:
         s.close()
+
+def exibir_banner():
+    banner = r"""
+    █████╗ ██╗  ██╗ █████╗ ██╗   ██╗ █████╗ ██████╗ ███████╗██╗   ██╗
+   ██╔══██╗██║  ██║██╔══██╗██║   ██║██╔══██╗██╔══██╗██╔════╝██║   ██║
+   ███████║███████║███████║██║   ██║███████║██║  ██║█████╗  ██║   ██║
+   ██╔══██║██╔══██║██╔══██║╚██╗ ██╔╝██╔══██║██║  ██║██╔══╝  ╚██╗ ██╔╝
+   ██║  ██║██║  ██║██║  ██║ ╚████╔╝ ██║  ██║██████╔╝███████╗ ╚████╔╝ 
+   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚═════╝ ╚══════╝  ╚═══╝ 
+    """
+    print(f"{Cores.CIANO}{banner}{Cores.RESET}")
+    print(f"{Cores.NEGRITO}{' ' * 20}WINDOWS SECURITY AUDITOR v2.2{Cores.RESET}")
+    print(f"{Cores.VERDE}{' ' * 24}Coded by: ahavadev{Cores.RESET}")
+    print(f"\n{Cores.NEGRITO}{'='*70}{Cores.RESET}")
 
 def titulo(texto: str):
     print(f"\n{Cores.NEGRITO}{'='*70}")
@@ -163,6 +177,7 @@ def teste_ntlm_compatibility():
         
         if valor < 3:
             print(f"{Cores.VERMELHO}[CRÍTICO] LmCompatibilityLevel = {valor}. NTLMv1 ainda permitido!{Cores.RESET}")
+            print(" -> Sujeito a quebra rápida de hashes em trânsito.")
             relatorio.add_critico()
         elif valor in (3, 4):
             print(f"{Cores.AMARELO}[BOM] NTLMv2 em uso, mas compatibilidade com versões antigas ativa.{Cores.RESET}")
@@ -278,8 +293,7 @@ def exibir_resumo():
 def main():
     ativar_ansi_windows()
     os.system('cls' if os.name == 'nt' else 'clear')
-    
-    print(f"{Cores.CIANO}{Cores.NEGRITO}=== WINDOWS SECURITY AUDITOR v2.2 ==={Cores.RESET}")
+    exibir_banner()
     
     if not is_admin():
         print(f"\n{Cores.VERMELHO}[!] ERRO: Execute este script como ADMINISTRADOR.{Cores.RESET}")
@@ -287,7 +301,8 @@ def main():
         sys.exit(1)
 
     ip = obter_ip_local()
-    print(f"[*] IP Detectado: {Cores.AMARELO}{ip}{Cores.RESET}")
+    print(f"[*] IP Detectado automaticamente: {Cores.AMARELO}{ip}{Cores.RESET}")
+    print("O script usará este IP para simular um acesso externo.\n")
 
     teste_null_session(ip)
     teste_vulnerabilidade_smb()
