@@ -1,91 +1,90 @@
-# 🛡️ AHAVA-GUARD: Windows Security Auditor
+# 🛡️ AHAVA-GUARD: Windows Security Auditor & Hardening Tool (v2.2)
 
-> **Auditoria de Segurança Reversa e Hardening para Windows**
+> **Auditoria de Superfície de Ataque e Remediação Automatizada para Windows**
 
-O **AHAVA-GUARD** é uma ferramenta de auto-diagnóstico escrita em Python puro. Ela simula localmente as técnicas de reconhecimento utilizadas por atacantes (Red Team) para verificar se o seu computador possui vulnerabilidades críticas expostas na rede.
+O **AHAVA-GUARD** é uma ferramenta de auditoria e resposta a incidentes escrita em **Python puro**. Ela simula localmente as técnicas de reconhecimento utilizadas por times de ataque (Red Team) para mapear falhas de rede e configurações inseguras no Windows, oferecendo **remediação imediata com um clique**.
 
-Diferente de scanners complexos, este script foca em configurações específicas do ecossistema Windows (SMB, Registro, RPC) que muitas vezes passam despercebidas.
+Diferente de scanners genéricos, o script foca em configurações profundas do ecossistema Microsoft (SMB, RPC, LSA e Firewall) que frequentemente passam despercebidas.
 
 ---
 
 ## 🚀 Funcionalidades
 
-O script executa automaticamente 4 módulos de verificação:
+O script realiza **6 verificações de segurança** e conta com **1 assistente interativo de remediação**:
 
-1.  **🕵️ Teste de Sessão Nula (Null Session)**
-    *   *Técnica:* Tenta conectar ao compartilhamento oculto `IPC$` sem credenciais.
-    *   *Simula:* `smbclient -N` ou ataques de enumeração anônima.
-    *   *Objetivo:* Verificar se hackers podem listar usuários/arquivos sem senha.
+### 🔍 Módulos de Auditoria
+1. **🕵️ Teste de Sessão Nula (Null Session)**
+   * *Técnica:* Tenta estabelecer conexão anônima ao compartilhamento `IPC$`.
+   * *Simula:* `smbclient -N`
+   * *Objetivo:* Detectar se o host permite listar recursos ou contas sem credenciais.
 
-2.  **🦠 Verificação SMBv1 (EternalBlue)**
-    *   *Técnica:* Analisa chaves do Registro do Windows e configurações do PowerShell.
-    *   *Simula:* `nmap --script smb-vuln-ms17-010`
-    *   *Objetivo:* Garantir que o protocolo obsoleto e perigoso (alvo do WannaCry) esteja desativado.
+2. **🦠 Verificação de SMBv1 (EternalBlue / MS17-010)**
+   * *Técnica:* Consulta registros do sistema e `Get-SmbServerConfiguration`.
+   * *Simula:* `nmap --script smb-vuln-ms17-010`
+   * *Objetivo:* Confirmar se o protocolo legado e vulnerável (alvo do WannaCry) está desligado.
 
-3.  **📝 Enumeração de Registro (RestrictAnonymous)**
-    *   *Técnica:* Lê a chave `Lsa\RestrictAnonymous`.
-    *   *Simula:* `enum4linux`
-    *   *Objetivo:* Validar se o sistema impede que anônimos coletem listas de contas do sistema.
+3. **✍️ Assinatura Digital SMB (Anti-NTLM Relay)**
+   * *Técnica:* Verifica a exigência da chave `RequireSecuritySignature`.
+   * *Objetivo:* Mitigar ataques clássicos de sequestro de credenciais e NTLM Relay na rede local.
 
-4.  **🔥 Scan de Portas Ativo (Auto IP)**
-    *   *Técnica:* Detecta o IP real da máquina e tenta conexões via socket.
-    *   *Simula:* `nmap -F`
-    *   *Objetivo:* Verificar se o Firewall está bloqueando corretamente portas críticas (445, 3389, 135) para conexões externas.
+4. **📝 Enumeração de Contas e LSA (RestrictAnonymous)**
+   * *Técnica:* Checa restrições na chave `SYSTEM\CurrentControlSet\Control\Lsa`.
+   * *Simula:* `enum4linux`
+   * *Objetivo:* Garantir que usuários anônimos não consigam enumerar SIDs e usuários locais.
+
+5. **🔑 Nível de Compatibilidade NTLM (LmCompatibilityLevel)**
+   * *Técnica:* Inspeciona se protocolos fracos de autenticação (LM / NTLMv1) ainda são aceitos.
+   * *Objetivo:* Prevenir a quebra rápida de hashes de rede.
+
+6. **🔥 Mapeamento de Portas e Diagnóstico de Firewall**
+   * *Técnica:* Mapeia portas críticas (135, 139, 445 e 3389).
+   * *Diferencial:* Identifica portas em escuta e cruza com as regras de entrada do Firewall, evitando alarmes falsos de tráfego local (*loopback*).
 
 ---
 
-## 📦 Instalação das Bibliotecas
+### 🛡️ Assistente de Remediação (Hardening)
+* **Bloqueio Seletivo:** Se portas críticas (como 445, 139 ou 135) estiverem expostas à rede, o programa pergunta interativamente se você deseja bloqueá-las.
+* **Integração com Firewall:** Cria regras nativas de segurança (`netsh advfirewall`) sem desligar serviços internos essenciais do Windows.
+* **Reversibilidade Simples:** Detecta regras que você já ativou anteriormente e oferece opção de desfazer o bloqueio a qualquer momento.
 
-Uma das principais vantagens do **AHAVA-GUARD** é que ele não possui dependências externas. **Você NÃO precisa usar o `pip install`.**
+---
 
-O script utiliza apenas a **Biblioteca Padrão (Standard Library)** que já vem instalada junto com o Python:
+## 📦 Dependências
 
-*   `socket` (Conexões de rede)
-*   `winreg` (Acesso ao Registro do Windows)
-*   `ctypes` (Interação com APIs do sistema)
-*   `subprocess` (Execução de comandos CMD/PowerShell)
-*   `os` & `sys` (Sistema operacional)
+O **AHAVA-GUARD** foi construído com foco em portabilidade e **zero dependências externas**. 
 
-### O único requisito é ter o Python instalado:
-1.  Baixe o Python em [python.org](https://www.python.org/downloads/).
-2.  Durante a instalação, marque a opção **"Add Python to PATH"**.
+**Você NÃO precisa usar o `pip install`.** O programa utiliza apenas módulos nativos da biblioteca padrão do Python:
+* `socket` (Sondagem TCP/UDP)
+* `winreg` (Auditoria de chaves do Registro)
+* `ctypes` (Elevação de privilégios e suporte ANSI nativo)
+* `subprocess` (Integração com PowerShell e Firewall)
+* `os` & `sys` (Interação com o sistema operacional)
 
 ---
 
 ## 🛠️ Como Executar
 
-Como o script acessa configurações protegidas do sistema (Registro e Rede), ele precisa de privilégios elevados.
+Por auditar chaves restritas do subsistema de segurança (LSA) e gerenciar regras de rede, **o script precisa de privilégios de Administrador**.
 
-1.  **Baixe o código:**
-    Salve o arquivo como `ahava_guard.py`.
+1. **Baixe o script:**
+   Salve o arquivo como `app.py`.
 
-2.  **Abra o terminal como Administrador:**
-    *   Clique com botão direito no CMD ou PowerShell > *"Executar como Administrador"*.
+2. **Abra o Prompt de Comando ou PowerShell como Administrador:**
+   * Clique com o botão direito no ícone do terminal > *"Executar como Administrador"*.
 
-3.  **Rode o comando:**
-    ```bash
-    python ahava_guard.py
-    ```
-
-## 🔍 Interpretando o Relatório
-
-O programa utiliza um sistema de cores para facilitar a leitura:
-
-| Cor | Significado | Ação Recomendada |
-| :--- | :--- | :--- |
-| 🟢 **VERDE** | **SEGURO** | Nenhuma ação necessária. Configuração correta. |
-| 🟡 **AMARELO** | **ALERTA** | Configuração padrão do Windows (pode ser melhorada). |
-| 🔴 **VERMELHO** | **PERIGO** | Vulnerabilidade detectada! Feche a porta ou altere o registro. |
-
-## ⚠️ Aviso Legal (Disclaimer)
-
-Esta ferramenta foi desenvolvida para fins **educacionais e de defesa (Blue Team)**. O objetivo é ajudar administradores e usuários a protegerem seus próprios sistemas (Self-Check).
-
-Não utilize este código para auditar redes ou computadores de terceiros sem autorização explícita. O autor não se responsabiliza pelo mau uso da ferramenta.
-
----
-
+3. **Inicie o programa:**
+   ```powershell
+   python app.py
+🔍 Interpretando os Resultados
+Indicador	Significado	Situação
+🟢 [SEGURO]	Configuração fortalecida / Recomendação seguida	Sistema protegido.
+🟢 [PROTEGIDA NO FIREWALL]	Serviço ativo localmente, mas isolado da rede externa	Acesso bloqueado para invasores.
+🟡 [ALERTA]	Parâmetro em valor padrão que aceita melhorias	Risco moderado em redes não confiáveis.
+🔴 [CRÍTICO / EXPOSTA]	Porta ou recurso sem autenticação aberto para a rede	Exige ação imediata de bloqueio.
+⚠️ Aviso Legal (Disclaimer)
+Esta ferramenta foi desenvolvida estritamente para fins educacionais, auditorias autorizadas e defesa cibernética (Blue Team).
+O autor não se responsabiliza pelo uso indevido deste software para escanear redes ou equipamentos de terceiros sem autorização prévia por escrito.
 <div align="center">
-    <p><b>Desenvolvido por ahavadev</b></p>
-    <p>🔒 Secure your world.</p>
+<p><b>Desenvolvido por ahavadev</b></p>
+<p>🔒 <i>Defenda antes que seja explorado.</i></p>
 </div>
